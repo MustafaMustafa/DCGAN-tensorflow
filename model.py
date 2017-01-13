@@ -64,6 +64,7 @@ class DCGAN(object):
 
         self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir
+
         self.build_model()
 
     def build_model(self):
@@ -114,6 +115,7 @@ class DCGAN(object):
         self.d_vars = [var for var in t_vars if 'd_' in var.name]
         self.g_vars = [var for var in t_vars if 'g_' in var.name]
 
+        self.global_step = tf.Variable(0, name='global_step', trainable=False)
         self.saver = tf.train.Saver()
 
     def train(self, config):
@@ -125,7 +127,7 @@ class DCGAN(object):
         #np.random.shuffle(data)
 
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
-                          .minimize(self.d_loss, var_list=self.d_vars)
+                          .minimize(self.d_loss, var_list=self.d_vars, global_step=self.global_step)
         g_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
                           .minimize(self.g_loss, var_list=self.g_vars)
 
@@ -148,7 +150,6 @@ class DCGAN(object):
             else:
                 sample_images = np.array(sample).astype(np.float32)
             
-        counter = 1
         start_time = time.time()
 
         if self.load(self.checkpoint_dir):
@@ -178,6 +179,7 @@ class DCGAN(object):
                 batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
                             .astype(np.float32)
 
+                counter = self.global_step.eval()
                 if config.dataset == 'mnist':
                     # Update D network
                     _, summary_str = self.sess.run([d_optim, self.d_sum],
@@ -218,7 +220,6 @@ class DCGAN(object):
                     errD_real = self.d_loss_real.eval({self.images: batch_images})
                     errG = self.g_loss.eval({self.z: batch_z})
 
-                counter += 1
                 print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
                     % (epoch, idx, batch_idxs,
                         time.time() - start_time, errD_fake+errD_real, errG))
@@ -245,7 +246,7 @@ class DCGAN(object):
                             print("one pic error!...")
 
                 if np.mod(counter, 500) == 2:
-                    self.save(config.checkpoint_dir, counter)
+                    self.save(config.checkpoint_dir)
 
     def discriminator(self, image, y=None, reuse=False):
         with tf.variable_scope("discriminator") as scope:
@@ -410,7 +411,7 @@ class DCGAN(object):
         
         return X/255.,y_vec
             
-    def save(self, checkpoint_dir, step):
+    def save(self, checkpoint_dir):
         model_name = "DCGAN.model"
         model_dir = "%s_%s_%s" % (self.dataset_name, self.batch_size, self.output_size)
         checkpoint_dir = os.path.join(checkpoint_dir, model_dir)
@@ -420,7 +421,7 @@ class DCGAN(object):
 
         self.saver.save(self.sess,
                         os.path.join(checkpoint_dir, model_name),
-                        global_step=step)
+                        global_step=self.global_step)
 
     def load(self, checkpoint_dir):
         print(" [*] Reading checkpoints...")
