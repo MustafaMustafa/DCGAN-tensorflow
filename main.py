@@ -17,6 +17,7 @@ flags.DEFINE_integer("batch_size", 64, "The size of batch images [64]")
 flags.DEFINE_integer("image_size", 108, "The size of image to use (will be center cropped) [108]")
 flags.DEFINE_integer("output_size", 64, "The size of the output images to produce [64]")
 flags.DEFINE_integer("c_dim", 3, "Dimension of image color. [3]")
+flags.DEFINE_string("z_dist", "uniform", "Generating function for z (prior). uniform or normal [uniform]")
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, lsun]")
 flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the checkpoints [checkpoint]")
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
@@ -42,6 +43,7 @@ def main(_):
                           y_dim=10,
                           output_size=28,
                           c_dim=1,
+                          z_dist=FLAGS.z_dist,
                           dataset_name=FLAGS.dataset,
                           is_crop=FLAGS.is_crop,
                           checkpoint_dir=FLAGS.checkpoint_dir,
@@ -52,6 +54,7 @@ def main(_):
                           batch_size=FLAGS.batch_size,
                           output_size=FLAGS.output_size,
                           c_dim=FLAGS.c_dim,
+                          z_dist=FLAGS.z_dist,
                           dataset_name=FLAGS.dataset,
                           is_crop=FLAGS.is_crop,
                           checkpoint_dir=FLAGS.checkpoint_dir,

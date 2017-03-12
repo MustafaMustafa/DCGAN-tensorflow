@@ -8,7 +8,9 @@ import random
 import pprint
 import scipy.misc
 import numpy as np
+import os
 from time import gmtime, strftime
+from ops import generator_prior
 
 pp = pprint.PrettyPrinter()
 
@@ -144,8 +146,16 @@ def make_gif(images, fname, duration=2, true_image=False):
   clip.write_gif(fname, fps = len(images) / duration)
 
 def visualize(sess, dcgan, config, option):
+  if config.z_dist == 'uniform':
+    z_gen = generator_prior(np.random.uniform, [-1,1])
+  elif config.z_dist == 'normal':
+    z_gen = generator_prior(np.random.normal, [0,1])
+  else:
+    print("Unknown generating function %s", config.z_dist)
+    exit(1)
+
   if option == 0:
-    z_sample = np.random.uniform(-0.5, 0.5, size=(config.batch_size, dcgan.z_dim))
+    z_sample = z_gen(shape=(config.batch_size, dcgan.z_dim))
     samples = sess.run(dcgan.sampler, feed_dict={dcgan.z: z_sample})
     save_images(samples, [8, 8], './%s/test_%s.png' % (config.sample_dir, strftime("%Y-%m-%d %H:%M:%S", gmtime())))
   elif option == 1:
@@ -170,7 +180,7 @@ def visualize(sess, dcgan, config, option):
     values = np.arange(0, 1, 1./config.batch_size)
     for idx in [random.randint(0, 99) for _ in xrange(100)]:
       print(" [*] %d" % idx)
-      z = np.random.uniform(-0.2, 0.2, size=(dcgan.z_dim))
+      z = z_gen(shape=(dcgan.z_dim))
       z_sample = np.tile(z, (config.batch_size, 1))
       #z_sample = np.zeros([config.batch_size, dcgan.z_dim])
       for kdx, z in enumerate(z_sample):

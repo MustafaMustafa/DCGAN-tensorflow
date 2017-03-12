@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from tensorflow.python.framework import ops
 
-from utils import *
+# from utils import *
 
 class batch_norm(object):
     def __init__(self, epsilon=1e-5, momentum = 0.9, name="batch_norm"):
@@ -21,6 +21,14 @@ class batch_norm(object):
                                             scale=True,
                                             is_training=train,
                                             scope=self.name)
+
+class generator_prior(object):
+    def __init__(self, rand_gen, parameters):
+        self.parameters = parameters
+        self.rand_gen = rand_gen
+
+    def __call__(self, shape):
+        return self.rand_gen(self.parameters[0], self.parameters[1], size=shape)
 
 
 def binary_cross_entropy(preds, targets, name=None):

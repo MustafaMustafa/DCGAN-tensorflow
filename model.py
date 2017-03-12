@@ -12,7 +12,7 @@ from utils import *
 class DCGAN(object):
     def __init__(self, sess, image_size=108, is_crop=True,
                  batch_size=64, sample_size = 64, output_size=64,
-                 y_dim=None, z_dim=100, gf_dim=64, df_dim=64,
+                 y_dim=None, z_dim=100, z_dist='uniform', gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
                  checkpoint_dir=None, sample_dir=None):
         """
@@ -23,6 +23,7 @@ class DCGAN(object):
             output_size: (optional) The resolution in pixels of the images. [64]
             y_dim: (optional) Dimension of dim for y. [None]
             z_dim: (optional) Dimension of dim for Z. [100]
+            z_dist: (optional) Generating function for z (prior). uniform or normal [uniform]
             gf_dim: (optional) Dimension of gen filters in first conv layer. [64]
             df_dim: (optional) Dimension of discrim filters in first conv layer. [64]
             gfc_dim: (optional) Dimension of gen units for for fully connected layer. [1024]
@@ -39,6 +40,14 @@ class DCGAN(object):
 
         self.y_dim = y_dim
         self.z_dim = z_dim
+        if z_dist == 'uniform':
+            self.z_gen = generator_prior(np.random.uniform, [-1,1])
+        elif z_dist == 'normal':
+            self.z_gen = generator_prior(np.random.normal, [0,1])
+        else:
+            print("Unknown generating function %s", z_dist)
+            exit(1)
+
 
         self.gf_dim = gf_dim
         self.df_dim = df_dim
@@ -138,7 +147,7 @@ class DCGAN(object):
         self.d_sum = tf.summary.merge([self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
         self.writer = tf.summary.FileWriter("./logs/"+config.tensorboard_run, self.sess.graph)
 
-        sample_z = np.random.uniform(-1, 1, size=(self.sample_size , self.z_dim))
+        sample_z = self.z_gen(shape=(self.sample_size , self.z_dim))
         
         if config.dataset == 'mnist':
             sample_images = data_X[0:self.sample_size]
@@ -177,8 +186,7 @@ class DCGAN(object):
                     else:
                         batch_images = np.array(batch).astype(np.float32)
 
-                batch_z = np.random.uniform(-1, 1, [config.batch_size, self.z_dim]) \
-                            .astype(np.float32)
+                batch_z = self.z_gen(shape=(config.batch_size , self.z_dim)).astype(np.float32)
 
                 counter = self.global_step.eval()
                 if config.dataset == 'mnist':
