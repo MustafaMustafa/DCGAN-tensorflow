@@ -55,6 +55,7 @@ def main(_):
                           output_size=FLAGS.output_size,
                           c_dim=FLAGS.c_dim,
                           z_dist=FLAGS.z_dist,
+                          gf_dim=128, df_dim=128,
                           dataset_name=FLAGS.dataset,
                           is_crop=FLAGS.is_crop,
                           checkpoint_dir=FLAGS.checkpoint_dir,
