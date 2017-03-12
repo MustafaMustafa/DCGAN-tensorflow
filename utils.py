@@ -9,6 +9,7 @@ import pprint
 import scipy.misc
 import numpy as np
 import os
+from glob import glob
 from time import gmtime, strftime
 from ops import generator_prior
 
@@ -224,3 +225,18 @@ def visualize(sess, dcgan, config, option):
     new_image_set = [merge(np.array([images[idx] for images in image_set]), [10, 10]) \
         for idx in range(64) + range(63, -1, -1)]
     make_gif(new_image_set, './%s/test_gif_merged.gif'%(config.sample_dir), duration=8)
+
+def get_data_arr(config):
+
+    is_crop = '_cropped' if config.is_crop == True else ''
+    npy_path = os.path.join('./data', config.dataset+is_crop+'.npy')
+
+    is_grayscale = (config.c_dim == 1)
+    if not os.path.exists(npy_path):
+        files = glob(os.path.join('./data', config.dataset, '*.jpg'))
+        data = [get_image(batch_file, config.image_size, is_crop=config.is_crop, resize_w=config.output_size, is_grayscale = is_grayscale) for batch_file in files]
+        np.save(npy_path, data)
+
+    data = np.load(npy_path, mmap_mode='r')
+    return data
+

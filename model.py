@@ -132,7 +132,10 @@ class DCGAN(object):
         if config.dataset == 'mnist':
             data_X, data_y = self.load_mnist()
         else:
-            data = glob(os.path.join("./data", config.dataset, "*.jpg"))
+            print("Loading array ...")
+            data = get_data_arr(config)
+            print("Done loading array.")
+
         #np.random.shuffle(data)
 
         d_optim = tf.train.AdamOptimizer(config.learning_rate, beta1=config.beta1) \
@@ -153,12 +156,7 @@ class DCGAN(object):
             sample_images = data_X[0:self.sample_size]
             sample_labels = data_y[0:self.sample_size]
         else:
-            sample_files = data[0:self.sample_size]
-            sample = [get_image(sample_file, self.image_size, is_crop=self.is_crop, resize_w=self.output_size, is_grayscale = self.is_grayscale) for sample_file in sample_files]
-            if (self.is_grayscale):
-                sample_images = np.array(sample).astype(np.float32)[:, :, :, None]
-            else:
-                sample_images = np.array(sample).astype(np.float32)
+            sample_images = data[0:self.sample_size]
             
         start_time = time.time()
 
@@ -171,7 +169,6 @@ class DCGAN(object):
             if config.dataset == 'mnist':
                 batch_idxs = min(len(data_X), config.train_size) // config.batch_size
             else:            
-                data = glob(os.path.join("./data", config.dataset, "*.jpg"))
                 batch_idxs = min(len(data), config.train_size) // config.batch_size
 
             for idx in xrange(0, batch_idxs):
@@ -179,12 +176,7 @@ class DCGAN(object):
                     batch_images = data_X[idx*config.batch_size:(idx+1)*config.batch_size]
                     batch_labels = data_y[idx*config.batch_size:(idx+1)*config.batch_size]
                 else:
-                    batch_files = data[idx*config.batch_size:(idx+1)*config.batch_size]
-                    batch = [get_image(batch_file, self.image_size, is_crop=self.is_crop, resize_w=self.output_size, is_grayscale = self.is_grayscale) for batch_file in batch_files]
-                    if (self.is_grayscale):
-                        batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
-                    else:
-                        batch_images = np.array(batch).astype(np.float32)
+                    batch_images = data[idx*config.batch_size:(idx+1)*config.batch_size]
 
                 batch_z = self.z_gen(shape=(config.batch_size , self.z_dim)).astype(np.float32)
 
