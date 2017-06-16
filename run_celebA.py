@@ -13,8 +13,10 @@ arch = "KNL"
 
 command = 'python main.py --debug --dataset %s --image_size %i --output_size %i --is_crop True --is_train True ' \
           '--sample_dir samples_%s --checkpoint_dir checkpoint_%s --tensorboard_run %s ' \
-          '--gen_updates %i --epoch %i --batch_size %i --z_dist %s --data_format %s'%(dataset, image_size, image_size, \
-                                                         tag, tag, tag, gen_updates, epoch, batch_size, z_dist, data_format)
+          '--gen_updates %i --epoch %i --batch_size %i --z_dist %s --data_format %s ' \
+          '--transpose_matmul_b %s --arch %s'%(dataset, image_size, image_size, \
+                                               tag, tag, tag, gen_updates, epoch, batch_size, z_dist, data_format, \
+                                               transpose_matmul_b, arch)
 
 print command
 os.system(command)

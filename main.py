@@ -26,8 +26,30 @@ flags.DEFINE_string("tensorboard_run", "run_0", "Tensorboard run directory name 
 flags.DEFINE_boolean("is_train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("is_crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
+flags.DEFINE_string("arch", "KNL", "Architecture, KNL or HSW")
 flags.DEFINE_boolean("transpose_matmul_b", False, "Transpose matmul B matrix for performance")
 FLAGS = flags.FLAGS
+
+#common stuff
+os.environ["KMP_BLOCKTIME"] = "1"
+os.environ["KMP_SETTINGS"] = "1"
+os.environ["KMP_AFFINITY"]= "granularity=fine,verbose,compact,1,0"
+
+#arch-specific stuff
+if FLAGS.arch=='HSW':
+    num_inter_threads = 2
+    num_intra_threads = 16
+elif FLAGS.arch=='KNL':
+    num_inter_threads = 2
+    num_intra_threads = 66
+else:
+    raise ValueError('Please specify a valid architecture with arch (allowed values: HSW, KNL)')
+
+    #set the rest
+os.environ['OMP_NUM_THREADS'] = str(num_intra_threads)
+sess_config=tf.ConfigProto(inter_op_parallelism_threads=num_inter_threads,intra_op_parallelism_threads=num_intra_threads)
+
+print("Using ",num_inter_threads,"-way task parallelism with ",num_intra_threads,"-way data parallelism.")
 
 def main(_):
     pp.pprint(flags.FLAGS.__flags)
@@ -37,7 +59,7 @@ def main(_):
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
 
-    with tf.Session() as sess:
+    with tf.Session(config=sess_config) as sess:
         if FLAGS.dataset == 'mnist':
             dcgan = DCGAN(sess,
                           data_format=FLAGS.data_format,
