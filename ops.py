@@ -63,13 +63,15 @@ def conv2d(input_, output_dim, data_format,
 
     if data_format == "NHWC":
         in_channels = input_.get_shape()[-1]
+        strides = [1, d_h, d_w, 1]
     else:
         in_channels = input_.get_shape()[1]
+        strides = [1, 1, d_h, d_w]
 
     with tf.variable_scope(name):
         w = tf.get_variable('w', [k_h, k_w, in_channels, output_dim],
                             initializer=tf.truncated_normal_initializer(stddev=stddev))
-        conv = tf.nn.conv2d(input_, w, strides=[1, d_h, d_w, 1], padding='SAME', data_format=data_format)
+        conv = tf.nn.conv2d(input_, w, strides=strides, padding='SAME', data_format=data_format)
 
         biases = tf.get_variable('biases', [output_dim], initializer=tf.constant_initializer(0.0))
         conv = tf.reshape(tf.nn.bias_add(conv, biases, data_format=data_format), conv.get_shape())
@@ -83,15 +85,17 @@ def deconv2d(input_, output_shape, data_format,
     if data_format == "NHWC":
         in_channels = input_.get_shape()[-1]
         out_channels = output_shape[-1]
+        strides = [1, d_h, d_w, 1]
     else:
         in_channels = input_.get_shape()[1]
         out_channels = output_shape[1]
+        strides = [1, 1, d_h, d_w]
 
     with tf.variable_scope(name):
         w = tf.get_variable('w', [k_h, k_w, out_channels, in_channels],
                             initializer=tf.random_normal_initializer(stddev=stddev))
         deconv = tf.nn.conv2d_transpose(input_, w, output_shape=output_shape,
-                strides=[1, d_h, d_w, 1], data_format=data_format)
+                strides=strides, data_format=data_format)
 
         biases = tf.get_variable('biases', [out_channels], initializer=tf.constant_initializer(0.0))
         deconv = tf.reshape(tf.nn.bias_add(deconv, biases, data_format=data_format), deconv.get_shape())
