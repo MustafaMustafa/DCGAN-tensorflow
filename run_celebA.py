@@ -7,7 +7,9 @@ gen_updates = 1
 epoch = 4
 batch_size = 64
 z_dist = 'normal'
-data_format = 'NCHW'
+data_format = 'NHWC'
+transpose_matmul_b = "True"
+arch = "KNL"
 
 command = 'python main.py --debug --dataset %s --image_size %i --output_size %i --is_crop True --is_train True ' \
           '--sample_dir samples_%s --checkpoint_dir checkpoint_%s --tensorboard_run %s ' \

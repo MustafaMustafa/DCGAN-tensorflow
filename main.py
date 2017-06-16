@@ -26,6 +26,7 @@ flags.DEFINE_string("tensorboard_run", "run_0", "Tensorboard run directory name 
 flags.DEFINE_boolean("is_train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("is_crop", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
+flags.DEFINE_boolean("transpose_matmul_b", False, "Transpose matmul B matrix for performance")
 FLAGS = flags.FLAGS
 
 def main(_):
@@ -49,7 +50,8 @@ def main(_):
                           dataset_name=FLAGS.dataset,
                           is_crop=FLAGS.is_crop,
                           checkpoint_dir=FLAGS.checkpoint_dir,
-                          sample_dir=FLAGS.sample_dir)
+                          sample_dir=FLAGS.sample_dir,
+                          transpose_matmul_b=FLAGS.transpose_matmul_b)
         else:
             dcgan = DCGAN(sess,
                           data_format=FLAGS.data_format,
@@ -62,7 +64,8 @@ def main(_):
                           dataset_name=FLAGS.dataset,
                           is_crop=FLAGS.is_crop,
                           checkpoint_dir=FLAGS.checkpoint_dir,
-                          sample_dir=FLAGS.sample_dir)
+                          sample_dir=FLAGS.sample_dir,
+                          transpose_matmul_b=FLAGS.transpose_matmul_b)
 
         if FLAGS.is_train:
             dcgan.train(FLAGS)

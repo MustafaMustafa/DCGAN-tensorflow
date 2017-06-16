@@ -14,7 +14,7 @@ class DCGAN(object):
                  batch_size=64, sample_size = 64, output_size=64,
                  y_dim=None, z_dim=100, z_dist='uniform', gf_dim=64, df_dim=64,
                  gfc_dim=1024, dfc_dim=1024, c_dim=3, dataset_name='default',
-                 checkpoint_dir=None, sample_dir=None):
+                 checkpoint_dir=None, sample_dir=None, transpose_matmul_b=False):
         """
 
         Args:
@@ -66,6 +66,7 @@ class DCGAN(object):
         self.gfc_dim = gfc_dim
         self.dfc_dim = dfc_dim
 
+        self.transpose_matmul_b = transpose_matmul_b
 
         # batch normalization : deals with poor initialization helps gradient flow
         self.d_bn1 = batch_norm(name='d_bn1', data_format=data_format)
@@ -274,7 +275,7 @@ class DCGAN(object):
                 h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim*2, name='d_h1_conv', data_format=self.data_format)))
                 h2 = lrelu(self.d_bn2(conv2d(h1, self.df_dim*4, name='d_h2_conv', data_format=self.data_format)))
                 h3 = lrelu(self.d_bn3(conv2d(h2, self.df_dim*8, name='d_h3_conv', data_format=self.data_format)))
-                h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin')
+                h4 = linear(tf.reshape(h3, [self.batch_size, -1]), 1, 'd_h3_lin', transpose_b=self.transpose_matmul_b)
 
                 return tf.nn.sigmoid(h4), h4
             else:
@@ -288,10 +289,10 @@ class DCGAN(object):
                 h1 = tf.reshape(h1, [self.batch_size, -1])            
                 h1 = tf.concat(1, [h1, y])
                 
-                h2 = lrelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin')))
+                h2 = lrelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin', transpose_b=self.transpose_matmul_b)))
                 h2 = tf.concat(1, [h2, y])
 
-                h3 = linear(h2, 1, 'd_h3_lin')
+                h3 = linear(h2, 1, 'd_h3_lin', transpose_b=self.transpose_matmul_b)
                 
                 return tf.nn.sigmoid(h3), h3
 
@@ -302,7 +303,7 @@ class DCGAN(object):
                 s2, s4, s8, s16 = int(s/2), int(s/4), int(s/8), int(s/16)
 
                 # project `z` and reshape
-                self.z_, self.h0_w, self.h0_b = linear(z, self.gf_dim*8*s16*s16, 'g_h0_lin', with_w=True)
+                self.z_, self.h0_w, self.h0_b = linear(z, self.gf_dim*8*s16*s16, 'g_h0_lin', with_w=True, transpose_b=self.transpose_matmul_b)
 
                 self.h0 = tf.reshape(self.z_, self.tensor_shape(-1, s16, s16, self.gf_dim*8))
                 h0 = tf.nn.relu(self.g_bn0(self.h0))
@@ -331,10 +332,10 @@ class DCGAN(object):
                 yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
                 z = tf.concat(1, [z, y])
 
-                h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin')))
+                h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', transpose_b=self.transpose_matmul_b)))
                 h0 = tf.concat(1, [h0, y])
 
-                h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim*2*s4*s4, 'g_h1_lin')))
+                h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim*2*s4*s4, 'g_h1_lin', transpose_b=self.transpose_matmul_b)))
                 h1 = tf.reshape(h1, self.tensor_shape(self.batch_size, s4, s4, self.gf_dim * 2))
 
                 h1 = conv_cond_concat(h1, yb)
@@ -356,7 +357,7 @@ class DCGAN(object):
                 s2, s4, s8, s16 = int(s/2), int(s/4), int(s/8), int(s/16)
 
                 # project `z` and reshape
-                h0 = tf.reshape(linear(z, self.gf_dim*8*s16*s16, 'g_h0_lin'),
+                h0 = tf.reshape(linear(z, self.gf_dim*8*s16*s16, 'g_h0_lin', transpose_b=self.transpose_matmul_b),
                                 self.tensor_shape( -1, s16, s16, self.gf_dim * 8 ))
                 h0 = tf.nn.relu(self.g_bn0(h0, train=False))
 
@@ -380,10 +381,10 @@ class DCGAN(object):
                 yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
                 z = tf.concat(1, [z, y])
 
-                h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin')))
+                h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin', transpose_b=self.transpose_matmul_b)))
                 h0 = tf.concat(1, [h0, y])
 
-                h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim*2*s4*s4, 'g_h1_lin'), train=False))
+                h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim*2*s4*s4, 'g_h1_lin', transpose_b=self.transpose_matmul_b), train=False))
                 h1 = tf.reshape(h1, self.tensor_shape( self.batch_size, s4, s4, self.gf_dim * 2 ))
                 h1 = conv_cond_concat(h1, yb)
 
