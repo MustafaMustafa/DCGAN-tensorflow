@@ -18,6 +18,7 @@ class batch_norm(object):
         return tf.contrib.layers.batch_norm(x,
                                             data_format=self.data_format,
                                             decay=self.momentum, 
+                                            fused=True,
                                             updates_collections=None,
                                             epsilon=self.epsilon,
                                             scale=True,
