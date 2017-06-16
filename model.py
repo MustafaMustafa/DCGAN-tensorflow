@@ -113,7 +113,9 @@ class DCGAN(object):
 
         self.d_sum = tf.summary.histogram("d", self.D)
         self.d__sum = tf.summary.histogram("d_", self.D_)
-        self.G_sum = tf.summary.image("G", self.G)
+
+        if self.data_format == "NHWC":
+            self.G_sum = tf.summary.image("G", self.G)
 
         try:
             self.d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.D_logits, tf.ones_like(self.D)))
@@ -162,7 +164,11 @@ class DCGAN(object):
         init_op = tf.global_variables_initializer()
         self.sess.run(init_op)
 
-        self.g_sum = tf.summary.merge([self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
+        if self.data_format == "NHWC":
+            self.g_sum = tf.summary.merge([self.z_sum, self.d__sum, self.G_sum, self.d_loss_fake_sum, self.g_loss_sum])
+        else:
+            self.g_sum = tf.summary.merge([self.z_sum, self.d__sum, self.d_loss_fake_sum, self.g_loss_sum])
+
         self.d_sum = tf.summary.merge([self.z_sum, self.d_sum, self.d_loss_real_sum, self.d_loss_sum])
         self.writer = tf.summary.FileWriter("./logs/"+config.tensorboard_run, self.sess.graph)
 
