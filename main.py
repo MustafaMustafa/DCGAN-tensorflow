@@ -8,6 +8,7 @@ from utils import pp, visualize, to_json
 import tensorflow as tf
 
 flags = tf.app.flags
+flags.DEFINE_string("data_format", "NHWC", "data format [NHWC]")
 flags.DEFINE_integer("epoch", 25, "Epoch to train [25]")
 flags.DEFINE_float("learning_rate", 0.0002, "Learning rate of for adam [0.0002]")
 flags.DEFINE_float("beta1", 0.5, "Momentum term of adam [0.5]")
@@ -38,6 +39,7 @@ def main(_):
     with tf.Session() as sess:
         if FLAGS.dataset == 'mnist':
             dcgan = DCGAN(sess,
+                          data_format=FLAGS.data_format,
                           image_size=FLAGS.image_size,
                           batch_size=FLAGS.batch_size,
                           y_dim=10,
@@ -50,6 +52,7 @@ def main(_):
                           sample_dir=FLAGS.sample_dir)
         else:
             dcgan = DCGAN(sess,
+                          data_format=FLAGS.data_format,
                           image_size=FLAGS.image_size,
                           batch_size=FLAGS.batch_size,
                           output_size=FLAGS.output_size,

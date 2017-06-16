@@ -229,12 +229,18 @@ def visualize(sess, dcgan, config, option):
 def get_data_arr(config):
 
     is_crop = '_cropped' if config.is_crop == True else ''
-    npy_path = os.path.join('./data', config.dataset+is_crop+'.npy')
+    is_nchw = '_NCHW' if config.data_format == "NCHW" else ''
+
+    npy_path = os.path.join('./data', config.dataset+is_nchw+is_crop+'.npy')
 
     is_grayscale = (config.c_dim == 1)
     if not os.path.exists(npy_path):
         files = glob(os.path.join('./data', config.dataset, '*.jpg'))
         data = [get_image(batch_file, config.image_size, is_crop=config.is_crop, resize_w=config.output_size, is_grayscale = is_grayscale) for batch_file in files]
+
+        if config.data_format == "NCHW":
+            data = np.array(data)
+            data = data.transpose([0,3,1,2])
         np.save(npy_path, data)
 
     data = np.load(npy_path, mmap_mode='r')
